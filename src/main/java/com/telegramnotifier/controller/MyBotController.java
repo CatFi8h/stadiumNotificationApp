@@ -1,5 +1,6 @@
 package com.telegramnotifier.controller;
 
+import com.telegramnotifier.model.SignedUsers;
 import com.telegramnotifier.service.MyBotService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,5 +17,10 @@ public class MyBotController {
     @GetMapping("hello")
     public String sayHello() {
         return myBotService.hello();
+    }
+
+    @GetMapping("getSignedUsers")
+    public SignedUsers getSignedUsers() {
+        return myBotService.getSignedUsers();
     }
 }
