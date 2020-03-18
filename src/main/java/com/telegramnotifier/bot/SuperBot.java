@@ -1,6 +1,9 @@
 package com.telegramnotifier.bot;
 
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -15,8 +18,14 @@ import java.util.List;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class SuperBot extends TelegramLongPollingBot {
-    @Override
+    private final TelegramMessageSender sender;
+
+    @Value("${bot.key}")
+    private String key;
+
+    @SneakyThrows @Override
     public void onUpdateReceived(Update update) {
         if (!update.hasMessage()) {
             return;
@@ -24,31 +33,9 @@ public class SuperBot extends TelegramLongPollingBot {
         Message message = update.getMessage();
         long chatId = message.getChatId();
         if (message.hasText()) {
-            SendMessage sendMessage = new SendMessage().setChatId(chatId)
-                    .setText(message.getText());
-            try {
-                execute(sendMessage);
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-                log.error(e.getMessage());
-            }
-
+            execute(sender.sendTextMessage(message, chatId));
         } else if (message.hasPhoto()) {
-            List<PhotoSize> photo = message.getPhoto();
-            PhotoSize photoSize = photo.stream().min(Comparator.comparing(PhotoSize::getFileSize)).orElse(null);
-            if (photoSize != null) {
-                String fileId = photoSize.getFileId();
-                Integer height = photoSize.getHeight();
-                Integer width = photoSize.getWidth();
-                String caption = "file_id: " + fileId + "\nwidth: " + Integer.toString(width) + "\nheight: " + Integer.toString(height);
-                SendPhoto sendPhoto = new SendPhoto().setCaption(caption).setPhoto(fileId).setChatId(chatId);
-
-                try {
-                    execute(sendPhoto);
-                } catch (TelegramApiException e) {
-                    e.printStackTrace();
-                }
-            }
+            execute(sender.sendPhotoMessage(message, chatId));
         }
     }
 
@@ -59,6 +46,6 @@ public class SuperBot extends TelegramLongPollingBot {
 
     @Override
     public String getBotToken() {
-        return "831257557:AAEv2gU-VW6G4CH4CxJD3xP3ootP2CGYGzc";
+        return key;
     }
 }
